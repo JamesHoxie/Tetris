@@ -1,6 +1,7 @@
 import pygame
 import random
 import math
+from classes import Tetrimino as t
 
 pygame.init()
 
@@ -123,10 +124,35 @@ def pause():
 
 		clock.tick(5)
 
+# draw given tetrimino on game screen
+def draw_tetrimino(tetrimino):
+	if tetrimino.shape == "I":
+		print("Draw I block")
+	elif tetrimino.shape == "O":
+		print("Draw O block")
+	elif tetrimino.shape == "T":
+		print("Draw T block")
+	elif tetrimino.shape == "J":
+		print("Draw J block")
+	elif tetrimino.shape == "L":
+		print("Draw L block")
+	elif tetrimino.shape == "S":
+		print("Draw S block")
+	elif tetrimino.shape == "Z":
+		print("Draw Z block")
+
+# draw all current tetriminoes on game screen
+def draw_tetriminoes(tetriminoes):
+	for tetrimino in tetriminoes:
+		draw_tetrimino(tetrimino)
+
 def game_loop():
+	tetriminoes = []
 	time_since_last_added_word = 0
 	running = True
 	game_over = False
+
+	tetriminoes.append(t.Tetrimino())
 
 	while running:
 		if game_over:
@@ -157,11 +183,23 @@ def game_loop():
 			if event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_1:
 					running = pause()
-				elif event.key == pygame.K_BACKSPACE:
-					if len(current_typed_chars) > 0:
-						current_typed_chars = current_typed_chars[:len(current_typed_chars)-1]
-				else:
-					current_typed_chars += event.unicode
+				elif event.key == pygame.K_2:
+					for tetrimino in tetriminoes:
+						print(tetrimino)
+				elif event.key == pygame.K_UP:
+					pass
+					# rotate movable tetrimino block
+				elif event.key == pygame.K_DOWN: 
+					pass
+					# move movable tetrimino block one step downward
+				elif event.key == pygame.K_LEFT:
+					pass
+					# move movable tetrimino block one step left
+				elif event.key == pygame.K_RIGHT:
+					pass
+					# move movable tetrimino block one step right
+
+				
 
 		#Update
 		#for tetrimino in tetriminoes:
@@ -170,6 +208,7 @@ def game_loop():
 		#Draw/Render
 		game_display.fill(BLACK)
 		display_score()
+		draw_tetriminoes(tetriminoes)
 
 		pygame.display.update()
 		# use dt to speed up tetrimino blocks later
