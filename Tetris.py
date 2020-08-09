@@ -8,6 +8,8 @@ pygame.init()
 
 DISPLAY_WIDTH = 700
 DISPLAY_HEIGHT = 600
+GRID_RIGHT = 550
+GRID_THICKNESS = 3
 FPS = 30
 
 FONT = pygame.font.Font('freesansbold.ttf', 32)
@@ -20,6 +22,9 @@ score_text = SCORE_FONT.render(str(score), True, colors.WHITE, colors.BLACK)
 score_rect = score_text.get_rect()
 
 # functions
+def draw_grid_area():
+	return pygame.draw.rect(game_display, colors.WHITE, (0, 0, GRID_RIGHT, DISPLAY_HEIGHT), GRID_THICKNESS)
+
 def display_score():
 	font_color = colors.WHITE
 
@@ -114,19 +119,29 @@ def pause():
 
 		clock.tick(5)
 
-# draw all current tetriminoes on game screen
-def draw_tetriminoes(tetriminoes):
-	for tetrimino in tetriminoes:
-		tetrimino.draw(game_display)
+# checks for collisions between the movable tetrimino and the other tetriminoes' rects that have been placed
+# and/or the bottom of the grid area
+def check_for_collisions(tetrimino, tetriminoes, grid_area):
+	pass	
+
+# draw all current tetriminoes' rects and movable tetrimino on game screen
+def draw_tetriminoes(tetrimino, tetriminoes):
+	for rect in tetrimino.rects:
+		game_display.fill(tetrimino.color, rect)
+
+	for placed_tetrimino in tetriminoes:
+		color = placed_tetrimino[0]
+		rect = placed_tetrimino[1]
+		game_display.fill(color, rect)
 
 def game_loop():
+	# list containing 2-tuples of colors and rects of tetriminoes that have been placed ex: [(colors.GREEN, (<rect-parameters>)), ...]
 	tetriminoes = []
-	time_since_last_added_word = 0
+	# rectangle containing tetrimino blocks
+	grid_area = draw_grid_area()
 	running = True
 	game_over = False
-	movable_tetrimino = t.Tetrimino(DISPLAY_WIDTH/2, DISPLAY_HEIGHT/2)
-
-	tetriminoes.append(movable_tetrimino)
+	movable_tetrimino = t.Tetrimino(350, DISPLAY_HEIGHT/2)
 
 	while running:
 		if game_over:
@@ -157,24 +172,69 @@ def game_loop():
 			if event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_1:
 					running = pause()
+				
 				elif event.key == pygame.K_2:
-					for tetrimino in tetriminoes:
-						print(tetrimino)
+					for tetrimino_rect in tetriminoes:
+						print(tetrimino_rect)
+				
 				elif event.key == pygame.K_UP:
+					# rotate movable tetrimino block
 					movable_tetrimino.rotation += 90
 					movable_tetrimino.rotation %= 360
-					# rotate movable tetrimino block
-				elif event.key == pygame.K_DOWN: 
-					movable_tetrimino.y += t.Tetrimino.block_size
-					# move movable tetrimino block one step downward
-				elif event.key == pygame.K_LEFT:
-					movable_tetrimino.x -= t.Tetrimino.block_size
-					# move movable tetrimino block one step left
-				elif event.key == pygame.K_RIGHT:
-					movable_tetrimino.x += t.Tetrimino.block_size
-					# move movable tetrimino block one step right
+					movable_tetrimino.update()
 
+					# check if rotation put tetrimino block outside of grid area
+					for rect in movable_tetrimino.rects:
+						if not grid_area.contains(rect):
+							print("before-correction: " + str(movable_tetrimino.rotation))
+							if movable_tetrimino.rotation == 0:
+								movable_tetrimino.rotation = 270
+							else:
+								movable_tetrimino.rotation -= 90
+							movable_tetrimino.update()
+							print("after-correction: " + str(movable_tetrimino.rotation))
+							break
+
+
+					movable_tetrimino.update()				
 				
+				elif event.key == pygame.K_DOWN: 
+					# move movable tetrimino block one step downward
+					movable_tetrimino.y += t.Tetrimino.block_size
+					movable_tetrimino.update()
+					
+				elif event.key == pygame.K_LEFT:
+					# move movable tetrimino block one step left
+					print("before: " + str(movable_tetrimino.x))
+					movable_tetrimino.x -= t.Tetrimino.block_size
+					movable_tetrimino.update()
+					print("after: " + str(movable_tetrimino.x))
+
+					for rect in movable_tetrimino.rects:
+						if not grid_area.contains(rect):
+							print("before-correction: " + str(movable_tetrimino.x))
+							movable_tetrimino.x += t.Tetrimino.block_size
+							movable_tetrimino.update()
+							print("after-correction: " + str(movable_tetrimino.x))
+							break
+						
+					
+				elif event.key == pygame.K_RIGHT:
+					# move movable tetrimino block one step right
+					print("before: " + str(movable_tetrimino.x))
+					movable_tetrimino.x += t.Tetrimino.block_size
+					movable_tetrimino.update()
+					print("after: " + str(movable_tetrimino.x))
+
+					for rect in movable_tetrimino.rects:
+						if not grid_area.contains(rect):
+							print("before-correction: " + str(movable_tetrimino.x))
+							movable_tetrimino.x -= t.Tetrimino.block_size
+							movable_tetrimino.update()
+							print("after-correction: " + str(movable_tetrimino.x))
+							break
+					
+		check_for_collisions(movable_tetrimino, tetriminoes, grid_area)		
 
 		#Update
 		#for tetrimino in tetriminoes:
@@ -183,12 +243,12 @@ def game_loop():
 		#Draw/Render
 		game_display.fill(colors.BLACK)
 		display_score()
-		draw_tetriminoes(tetriminoes)
+		draw_grid_area()
+		draw_tetriminoes(movable_tetrimino, tetriminoes)
 
 		pygame.display.update()
 		# use dt to speed up tetrimino blocks later
 		dt = clock.tick(FPS)
-		time_since_last_added_word += dt
 
 display_start_menu()
 game_loop()
