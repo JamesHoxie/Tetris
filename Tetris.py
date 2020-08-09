@@ -2,23 +2,13 @@ import pygame
 import random
 import math
 from classes import Tetrimino as t
+from classes.resources import Palette as colors
 
 pygame.init()
 
 DISPLAY_WIDTH = 700
-DISPLAY_HEIGHT = 700
+DISPLAY_HEIGHT = 600
 FPS = 30
-
-#palette
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-DARK_RED = (195, 0, 0)
-RED = (255, 0, 0)
-DARK_GREEN = (0, 195, 0)
-GREEN = (0, 255, 0)
-BLUE = (0, 0, 255)
-YELLOW = (220, 220, 0)
-ORANGE = (255, 165, 0)
 
 FONT = pygame.font.Font('freesansbold.ttf', 32)
 SCORE_FONT = pygame.font.Font(None, 28)
@@ -26,17 +16,17 @@ game_display = pygame.display.set_mode((DISPLAY_WIDTH, DISPLAY_HEIGHT))
 pygame.display.set_caption("Tetris")
 clock = pygame.time.Clock()
 score = 0
-score_text = SCORE_FONT.render(str(score), True, WHITE, BLACK)
+score_text = SCORE_FONT.render(str(score), True, colors.WHITE, colors.BLACK)
 score_rect = score_text.get_rect()
 
 # functions
 def display_score():
-	font_color = WHITE
+	font_color = colors.WHITE
 
 	if score < 0:
-		font_color = RED
+		font_color = COLORS.RED
 
-	score_text = SCORE_FONT.render("Score: " + str(score), True, font_color, BLACK)
+	score_text = SCORE_FONT.render("Score: " + str(score), True, font_color, colors.BLACK)
 	score_rect = score_text.get_rect()
 	score_rect.x = 930
 	score_rect.y = 10
@@ -45,7 +35,7 @@ def display_score():
 def display_start_menu():
 	MENU_FONT = pygame.font.Font("freesansbold.ttf", 28)
 	TILE_TEXT_FONT = pygame.font.Font('freesansbold.ttf', 70)
-	title_text = TILE_TEXT_FONT.render("Tetris", True, WHITE, BLACK)
+	title_text = TILE_TEXT_FONT.render("Tetris", True, colors.WHITE, colors.BLACK)
 	title_text_rect = title_text.get_rect()
 	title_text_rect.center = ((DISPLAY_WIDTH/2), (DISPLAY_HEIGHT/4))
 	menu = True
@@ -57,7 +47,7 @@ def display_start_menu():
 				pygame.quit()
 				quit()
 
-		game_display.fill(BLACK)
+		game_display.fill(colors.BLACK)
 		game_display.blit(title_text, title_text_rect)
 
 		# get mouse x and y
@@ -80,19 +70,19 @@ def display_start_menu():
 		button_container_y = DISPLAY_HEIGHT/2 - easy_button_width
 
 		# draw button container
-		pygame.draw.rect(game_display, BLUE, (button_container_x, button_container_y, button_container_length, button_container_width))
+		pygame.draw.rect(game_display, colors.BLUE, (button_container_x, button_container_y, button_container_length, button_container_width))
 
 		# easy button highlighting functionality
 		if easy_button_x + easy_button_length > mouse_x > easy_button_x and easy_button_y + easy_button_width > mouse_y > easy_button_y:
-			pygame.draw.rect(game_display, GREEN, (easy_button_x, easy_button_y, easy_button_length, easy_button_width))
+			pygame.draw.rect(game_display, colors.GREEN, (easy_button_x, easy_button_y, easy_button_length, easy_button_width))
 			if clicked:
 				return
 
 		else:
-			pygame.draw.rect(game_display, DARK_GREEN, (easy_button_x, easy_button_y, easy_button_length, easy_button_width))
+			pygame.draw.rect(game_display, colors.DARK_GREEN, (easy_button_x, easy_button_y, easy_button_length, easy_button_width))
 		
 		# button texts
-		easy_text = MENU_FONT.render("Start", True, BLACK)
+		easy_text = MENU_FONT.render("Start", True, colors.BLACK)
 		easy_text_rect = easy_text.get_rect()
 		easy_text_rect.x = easy_button_x + easy_button_length/5
 		easy_text_rect.y = easy_button_y
@@ -105,7 +95,7 @@ def display_start_menu():
 
 def pause():
 	PAUSE_FONT = pygame.font.Font("freesansbold.ttf", 35)
-	pause_text = PAUSE_FONT.render("Paused", True, WHITE, BLACK)
+	pause_text = PAUSE_FONT.render("Paused", True, colors.WHITE, colors.BLACK)
 	pause_rect = pause_text.get_rect()
 	pause_rect.center = (DISPLAY_WIDTH/2, DISPLAY_HEIGHT/2)
 	paused = True
@@ -124,39 +114,23 @@ def pause():
 
 		clock.tick(5)
 
-# draw given tetrimino on game screen
-def draw_tetrimino(tetrimino):
-	if tetrimino.shape == "I":
-		print("Draw I block")
-	elif tetrimino.shape == "O":
-		print("Draw O block")
-	elif tetrimino.shape == "T":
-		print("Draw T block")
-	elif tetrimino.shape == "J":
-		print("Draw J block")
-	elif tetrimino.shape == "L":
-		print("Draw L block")
-	elif tetrimino.shape == "S":
-		print("Draw S block")
-	elif tetrimino.shape == "Z":
-		print("Draw Z block")
-
 # draw all current tetriminoes on game screen
 def draw_tetriminoes(tetriminoes):
 	for tetrimino in tetriminoes:
-		draw_tetrimino(tetrimino)
+		tetrimino.draw(game_display)
 
 def game_loop():
 	tetriminoes = []
 	time_since_last_added_word = 0
 	running = True
 	game_over = False
+	movable_tetrimino = t.Tetrimino(DISPLAY_WIDTH/2, DISPLAY_HEIGHT/2)
 
-	tetriminoes.append(t.Tetrimino())
+	tetriminoes.append(movable_tetrimino)
 
 	while running:
 		if game_over:
-			game_over_text = FONT.render("Game Over", True, WHITE, BLACK)
+			game_over_text = FONT.render("Game Over", True, colors.WHITE, colors.BLACK)
 			game_over_rect = game_over_text.get_rect()
 			game_over_rect.x = DISPLAY_WIDTH / 2 - (game_over_rect.right - game_over_rect.left) / 2
 			game_over_rect.y = DISPLAY_HEIGHT / 2
@@ -187,16 +161,17 @@ def game_loop():
 					for tetrimino in tetriminoes:
 						print(tetrimino)
 				elif event.key == pygame.K_UP:
-					pass
+					movable_tetrimino.rotation += 90
+					movable_tetrimino.rotation %= 360
 					# rotate movable tetrimino block
 				elif event.key == pygame.K_DOWN: 
-					pass
+					movable_tetrimino.y += t.Tetrimino.block_size
 					# move movable tetrimino block one step downward
 				elif event.key == pygame.K_LEFT:
-					pass
+					movable_tetrimino.x -= t.Tetrimino.block_size
 					# move movable tetrimino block one step left
 				elif event.key == pygame.K_RIGHT:
-					pass
+					movable_tetrimino.x += t.Tetrimino.block_size
 					# move movable tetrimino block one step right
 
 				
@@ -206,7 +181,7 @@ def game_loop():
 			#tetrimino.update()
 
 		#Draw/Render
-		game_display.fill(BLACK)
+		game_display.fill(colors.BLACK)
 		display_score()
 		draw_tetriminoes(tetriminoes)
 
