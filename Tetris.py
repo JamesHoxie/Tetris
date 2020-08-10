@@ -120,9 +120,22 @@ def pause():
 		clock.tick(5)
 
 # checks for collisions between the movable tetrimino and the other tetriminoes' rects that have been placed
-# and/or the bottom of the grid area
+# and/or the bottom of the grid area. Returns True if a collision has occurred, else False when no collision has occurred
 def check_for_collisions(tetrimino, tetriminoes, grid_area):
-	pass	
+	for rect in tetrimino.rects:
+		# check if block has moved outside of grid area
+		if not grid_area.contains(rect):
+			return True
+
+		# check if block is colliding with any placed tetrimino blocks
+		else:
+			for rect_tuple in tetriminoes:
+				rect_object = pygame.Rect(rect_tuple)
+
+				if rect_object.contains(rect):
+					return True
+	
+	return False
 
 # draw all current tetriminoes' rects and movable tetrimino on game screen
 def draw_tetriminoes(tetrimino, tetriminoes):
@@ -130,18 +143,65 @@ def draw_tetriminoes(tetrimino, tetriminoes):
 		game_display.fill(tetrimino.color, rect)
 
 	for placed_tetrimino in tetriminoes:
-		color = placed_tetrimino[0]
-		rect = placed_tetrimino[1]
+		color = tetriminoes[placed_tetrimino]
+		rect = placed_tetrimino
 		game_display.fill(color, rect)
 
+# undo last action indicated by action flag()
+def undo_action(action_flag, tetrimino):
+	if action_flag == 1:
+		if tetrimino.rotation == 0:
+			tetrimino.rotation = 270
+		else:
+			tetrimino.rotation -= 90
+
+	elif action_flag == 2:
+		tetrimino.y -= t.Tetrimino.block_size
+
+	elif action_flag == 3:
+		tetrimino.x += t.Tetrimino.block_size
+
+	elif action_flag == 4:
+		tetrimino.x -= t.Tetrimino.block_size
+
+	else:
+		# action_flag is 0, do nothing
+		pass
+
+# rotate given tetrimino by 90 degrees and check if result is valid
+def rotate_tetrimino(tetrimino, tetriminoes, grid_area):
+	tetrimino.rotation += 90
+	tetrimino.rotation %= 360
+
+	return 1
+
+def drop_tetrimino(tetrimino, tetriminoes, grid_area):
+	# move movable tetrimino block one step downward
+	tetrimino.y += t.Tetrimino.block_size
+
+	return 2
+
+def move_tetrimino_left(tetrimino, tetriminoes, grid_area):
+	# move movable tetrimino block one step left
+	tetrimino.x -= t.Tetrimino.block_size
+	
+	return 3
+
+def move_tetrimino_right(tetrimino, tetriminoes, grid_area):
+	# move movable tetrimino block one step right
+	tetrimino.x += t.Tetrimino.block_size
+
+	return 4
+
 def game_loop():
-	# list containing 2-tuples of colors and rects of tetriminoes that have been placed ex: [(colors.GREEN, (<rect-parameters>)), ...]
-	tetriminoes = []
+	# dictionary containing mappings from rects to their colors. EX: {rect(...): colors.GREEN, ...}
+	tetriminoes = {}
 	# rectangle containing tetrimino blocks
 	grid_area = draw_grid_area()
 	running = True
 	game_over = False
 	movable_tetrimino = t.Tetrimino(350, DISPLAY_HEIGHT/2)
+	action_flag = 0
 
 	while running:
 		if game_over:
@@ -179,62 +239,54 @@ def game_loop():
 				
 				elif event.key == pygame.K_UP:
 					# rotate movable tetrimino block
-					movable_tetrimino.rotation += 90
-					movable_tetrimino.rotation %= 360
-					movable_tetrimino.update()
-
-					# check if rotation put tetrimino block outside of grid area
-					for rect in movable_tetrimino.rects:
-						if not grid_area.contains(rect):
-							print("before-correction: " + str(movable_tetrimino.rotation))
-							if movable_tetrimino.rotation == 0:
-								movable_tetrimino.rotation = 270
-							else:
-								movable_tetrimino.rotation -= 90
-							movable_tetrimino.update()
-							print("after-correction: " + str(movable_tetrimino.rotation))
-							break
-
-
-					movable_tetrimino.update()				
+					action_flag = rotate_tetrimino(movable_tetrimino, tetriminoes, grid_area)			
 				
 				elif event.key == pygame.K_DOWN: 
-					# move movable tetrimino block one step downward
-					movable_tetrimino.y += t.Tetrimino.block_size
-					movable_tetrimino.update()
+					# move movable tetrimino block down one step
+					action_flag = drop_tetrimino(movable_tetrimino, tetriminoes, grid_area)
 					
 				elif event.key == pygame.K_LEFT:
-					# move movable tetrimino block one step left
-					print("before: " + str(movable_tetrimino.x))
-					movable_tetrimino.x -= t.Tetrimino.block_size
-					movable_tetrimino.update()
-					print("after: " + str(movable_tetrimino.x))
-
-					for rect in movable_tetrimino.rects:
-						if not grid_area.contains(rect):
-							print("before-correction: " + str(movable_tetrimino.x))
-							movable_tetrimino.x += t.Tetrimino.block_size
-							movable_tetrimino.update()
-							print("after-correction: " + str(movable_tetrimino.x))
-							break
-						
-					
+					# move movable tetrimino block one step to right
+					action_flag = move_tetrimino_left(movable_tetrimino, tetriminoes, grid_area)
+									
 				elif event.key == pygame.K_RIGHT:
-					# move movable tetrimino block one step right
-					print("before: " + str(movable_tetrimino.x))
-					movable_tetrimino.x += t.Tetrimino.block_size
-					movable_tetrimino.update()
-					print("after: " + str(movable_tetrimino.x))
+					# move movable tetrimino block one step to left
+					action_flag = move_tetrimino_right(movable_tetrimino, tetriminoes, grid_area)
 
-					for rect in movable_tetrimino.rects:
-						if not grid_area.contains(rect):
-							print("before-correction: " + str(movable_tetrimino.x))
-							movable_tetrimino.x -= t.Tetrimino.block_size
-							movable_tetrimino.update()
-							print("after-correction: " + str(movable_tetrimino.x))
-							break
+				else:
+					# no action taken this step
+					action_flag = 0
 					
-		check_for_collisions(movable_tetrimino, tetriminoes, grid_area)		
+		# update movable tetrimino after action
+		movable_tetrimino.update()
+
+		if check_for_collisions(movable_tetrimino, tetriminoes, grid_area) == True:
+			# if a collision ocurred, undo the last action
+			undo_action(action_flag, movable_tetrimino)	
+			# update movable tetrimino after undoing action
+			movable_tetrimino.update()
+
+
+
+
+		# check if tetris block has hit bottom of grid_area
+		hit_bottom = False
+		for rect in movable_tetrimino.rects:
+			rect_y = rect[1]
+			if rect_y >= DISPLAY_HEIGHT - t.Tetrimino.block_size:
+				
+				hit_bottom = True 
+				break
+
+		# TODO: check if tetris block has hit top of placed tetriminos and needs to stop moving
+
+		if hit_bottom:
+			# add current movable tetrimino block's rects to set of placed tetrimino rects 
+			for rect in movable_tetrimino.rects:
+				tetriminoes[rect] = movable_tetrimino.color
+
+			# create new tetris block to move
+			movable_tetrimino = t.Tetrimino(350, DISPLAY_HEIGHT/2)
 
 		#Update
 		#for tetrimino in tetriminoes:

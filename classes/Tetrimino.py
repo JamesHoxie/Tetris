@@ -10,13 +10,13 @@ class Tetrimino():
 
 	def __init__(self, x, y):
 		self.active = True
-		self.shape = "I"#self.tetris_shapes[random.randint(1, 7)]
+		self.shape = self.tetris_shapes[random.randint(1, 7)]
 		self.color = self.tetris_shape_colors[self.shape]
 		self.rotation = 0
 		# the x and y coordinates to move and rotate the tetrimino around
 		self.x = x 
 		self.y = y
-		# set of the rects that currently make up this tetrimino
+		# list of the typles that represent pygame.Rects that currently make up this tetrimino
 		self.rects = []
 		self.update()
 		
