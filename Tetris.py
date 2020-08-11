@@ -5,6 +5,7 @@ from classes import Tetrimino as t
 from classes.resources import Palette as colors
 
 pygame.init()
+pygame.key.set_repeat(10, 100)
 
 DISPLAY_WIDTH = 700
 DISPLAY_HEIGHT = 600
@@ -26,6 +27,15 @@ score_rect = score_text.get_rect()
 # functions
 def draw_grid_area():
 	return pygame.draw.rect(game_display, colors.WHITE, (0, 0, GRID_RIGHT, DISPLAY_HEIGHT), GRID_THICKNESS)
+
+def draw_grid():
+	for x in range(BLOCK_SIZE, GRID_RIGHT, BLOCK_SIZE):
+		pygame.draw.line(game_display, colors.BLACK, (x, 0), (x, DISPLAY_HEIGHT), 1)
+
+	for y in range(BLOCK_SIZE, DISPLAY_HEIGHT, BLOCK_SIZE):
+		pygame.draw.line(game_display, colors.BLACK, (0, y), (GRID_RIGHT, y), 1)
+
+
 
 def display_score():
 	font_color = colors.WHITE
@@ -233,7 +243,7 @@ def game_loop():
 			if event.type == pygame.QUIT:
 				running = False
 
-			# check for typing a letter
+			# check for player input
 			if event.type == pygame.KEYDOWN:
 				if event.key == pygame.K_1:
 					running = pause()
@@ -258,10 +268,11 @@ def game_loop():
 					# move movable tetrimino block one step to left
 					action_flag = move_tetrimino_right(movable_tetrimino, tetriminoes, grid_area)
 
-				else:
-					# no action taken this step
-					action_flag = 0
-					
+			else:
+				# no action taken this step
+				action_flag = 0
+			
+		print(action_flag)		
 		# update movable tetrimino after action
 		movable_tetrimino.update()
 
@@ -274,7 +285,9 @@ def game_loop():
 		# move movable tetrimino down by one step automatically every second (based on dt)
 		if dt >= 1000:
 			drop_tetrimino(movable_tetrimino, tetriminoes, grid_area)
-			movable_tetrimino.update()
+			if check_for_collisions(movable_tetrimino, tetriminoes, grid_area) == True:
+				undo_action(2, movable_tetrimino)
+				movable_tetrimino.update()
 			dt = 0
 
 		# check if tetris block has hit bottom of grid_area
@@ -331,7 +344,6 @@ def game_loop():
 							rects_to_remove.append(rect)
 							break
 				
-				print(len(rects_to_remove))
 				# check if the row was full
 				if len(rects_to_remove) == MAX_BLOCKS_PER_ROW:
 					# remove all rects from this row from tetriminoes
@@ -344,11 +356,10 @@ def game_loop():
 				# clear rects_to_remove for next row to check
 				rects_to_remove = []
 
-			print("rows cleared: " + str(len(rows_cleared)))
-
 			if len(rows_cleared) > 0:
 				# need to move all placed tetrimino rects down by the number of rows cleared
-				for row_y in rows_cleared:
+				for i in range(len(rows_cleared)-1, -1, -1):
+					row_y = rows_cleared[i]
 					# list of rects to be removed per row
 					rects = []
 
@@ -369,8 +380,9 @@ def game_loop():
 		#Draw/Render
 		game_display.fill(colors.BLACK)
 		display_score()
-		draw_grid_area()
 		draw_tetriminoes(movable_tetrimino, tetriminoes)
+		draw_grid()
+		draw_grid_area()
 
 		pygame.display.update()
 		# use dt to speed up tetrimino blocks later
