@@ -5,7 +5,7 @@ from classes.resources import Palette as colors
 # class definition for a tetrimino block
 class Tetrimino():
 	tetris_shapes = {1: "I", 2: "O", 3: "T", 4: "J", 5: "L", 6: "S", 7: "Z"}
-	tetris_shape_colors = {"I": colors.ORANGE, "O": colors.RED, "T": colors.YELLOW, "J": colors.DARK_GREEN, "L": colors.BLUE, "S": colors.GREEN, "Z": colors.DARK_RED}
+	tetris_shape_colors = {"I": colors.ORANGE, "O": colors.RED, "T": colors.YELLOW, "J": colors.PINK, "L": colors.BLUE, "S": colors.NEW_GREEN, "Z": colors.PURPLE}
 	block_size = 25
 
 	def __init__(self, x, y):

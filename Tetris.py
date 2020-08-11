@@ -205,6 +205,75 @@ def move_tetrimino_right(tetrimino, tetriminoes, grid_area):
 
 	return 4
 
+def move_down_rows(rows_cleared, tetriminoes):
+	# need to move all placed tetrimino rects down
+	for i in range(len(rows_cleared)-1, -1, -1):
+		row_y = rows_cleared[i]
+		# list of rects to be removed per row
+		rects = []
+
+		for rect in tetriminoes.keys():
+			if rect[1] < row_y:
+				rects.append((rect, tetriminoes[rect]))
+
+		for rect in rects: 
+			tetriminoes.pop(rect[0])
+
+		for rect in rects:
+			tetriminoes[(rect[0][0], rect[0][1] + BLOCK_SIZE, rect[0][2], rect[0][3])] = rect[1]
+
+def check_for_completed_rows_to_clear(tetriminoes):
+	# list of rects to remove if a row has been cleared
+	rects_to_remove = []
+	# y coordinates of rows cleared this step
+	rows_cleared = []
+
+	# bottom to top
+	for y in range(DISPLAY_HEIGHT, 0, -BLOCK_SIZE):
+		for x in range(0, GRID_RIGHT, BLOCK_SIZE):
+			for rect in tetriminoes:
+				rect_x = rect[0]
+				rect_y = rect[1]
+
+
+				if rect_x == x and rect_y == y:
+					rects_to_remove.append(rect)
+					break
+		
+		# check if the row was full
+		if len(rects_to_remove) == MAX_BLOCKS_PER_ROW:
+			# remove all rects from this row from tetriminoes
+			for rect in rects_to_remove:
+				tetriminoes.pop(rect)
+
+			# add row y to rows cleared for this step
+			rows_cleared.append(y)
+
+		# clear rects_to_remove for next row to check
+		rects_to_remove = []
+
+	if len(rows_cleared) > 0:
+		move_down_rows(rows_cleared, tetriminoes)
+
+def check_if_tetrimino_should_stop_moving(tetrimino, tetriminoes):
+	# check if tetrimino has hit bottom of grid area and needs to stop moving
+	for rect in tetrimino.rects:
+		rect_y = rect[1]
+		
+		if rect_y == DISPLAY_HEIGHT - BLOCK_SIZE:	
+			return True 
+
+	# check if tetris block has hit top of placed tetriminoes and needs to stop moving
+	for m_rect in tetrimino.rects:
+		for p_rect in tetriminoes:
+			m_rect_x = m_rect[0]
+			p_rect_x = p_rect[0]
+			m_rect_y = m_rect[1]
+			p_rect_y = p_rect[1]
+
+			if m_rect_y == p_rect_y - BLOCK_SIZE and m_rect_x == p_rect_x:
+				return True
+
 def game_loop():
 	# dictionary containing mappings from rects to their colors. EX: {rect(...): colors.GREEN, ...}
 	tetriminoes = {}
@@ -271,8 +340,7 @@ def game_loop():
 			else:
 				# no action taken this step
 				action_flag = 0
-			
-		print(action_flag)		
+					
 		# update movable tetrimino after action
 		movable_tetrimino.update()
 
@@ -285,93 +353,30 @@ def game_loop():
 		# move movable tetrimino down by one step automatically every second (based on dt)
 		if dt >= 1000:
 			drop_tetrimino(movable_tetrimino, tetriminoes, grid_area)
+			movable_tetrimino.update()
 			if check_for_collisions(movable_tetrimino, tetriminoes, grid_area) == True:
 				undo_action(2, movable_tetrimino)
 				movable_tetrimino.update()
 			dt = 0
 
-		# check if tetris block has hit bottom of grid_area
-		hit_bottom_or_top = False
-		for rect in movable_tetrimino.rects:
-			rect_y = rect[1]
-			
-			if rect_y == DISPLAY_HEIGHT - BLOCK_SIZE:	
-				hit_bottom_or_top = True 
-				break
-
-		# check if tetris block has hit top of placed tetriminoes and needs to stop moving
-		for m_rect in movable_tetrimino.rects:
-			for p_rect in tetriminoes:
-				m_rect_x = m_rect[0]
-				p_rect_x = p_rect[0]
-				m_rect_y = m_rect[1]
-				p_rect_y = p_rect[1]
-
-				if m_rect_y == p_rect_y - BLOCK_SIZE and m_rect_x == p_rect_x:
-					hit_bottom_or_top = True
-					break
-
-		
-			if hit_bottom_or_top:
-				if touch_timer >= 20000:
-					# add current movable tetrimino block's rects to set of placed tetrimino rects 
-					for rect in movable_tetrimino.rects:
-						tetriminoes[rect] = movable_tetrimino.color
-
-					# create new tetris block to move
-					movable_tetrimino = t.Tetrimino(GRID_RIGHT/2, BLOCK_SIZE)
-					touch_timer = 0
-
-				else:
-					touch_timer += dt
-
-		# check for completed rows to clear
+		# check if tetris block has hit bottom of grid_area or top of placed tetrimino blocks
+		hit_bottom_or_top = check_if_tetrimino_should_stop_moving(movable_tetrimino, tetriminoes)
+	
 		if hit_bottom_or_top:
-			# list of rects to remove if a row has been cleared
-			rects_to_remove = []
-			# y coordinates of rows cleared this step
-			rows_cleared = []
+			if touch_timer >= 20000:
+				# add current movable tetrimino block's rects to set of placed tetrimino rects 
+				for rect in movable_tetrimino.rects:
+					tetriminoes[rect] = movable_tetrimino.color
 
-			# bottom to top
-			for y in range(DISPLAY_HEIGHT, 0, -BLOCK_SIZE):
-				for x in range(0, GRID_RIGHT, BLOCK_SIZE):
-					for rect in tetriminoes:
-						rect_x = rect[0]
-						rect_y = rect[1]
+				# create new tetris block to move
+				movable_tetrimino = t.Tetrimino(GRID_RIGHT/2, BLOCK_SIZE)
+				touch_timer = 0
 
+			else:
+				touch_timer += dt
 
-						if rect_x == x and rect_y == y:
-							rects_to_remove.append(rect)
-							break
-				
-				# check if the row was full
-				if len(rects_to_remove) == MAX_BLOCKS_PER_ROW:
-					# remove all rects from this row from tetriminoes
-					for rect in rects_to_remove:
-						tetriminoes.pop(rect)
-
-					# add row y to rows cleared for this step
-					rows_cleared.append(y)
-
-				# clear rects_to_remove for next row to check
-				rects_to_remove = []
-
-			if len(rows_cleared) > 0:
-				# need to move all placed tetrimino rects down by the number of rows cleared
-				for i in range(len(rows_cleared)-1, -1, -1):
-					row_y = rows_cleared[i]
-					# list of rects to be removed per row
-					rects = []
-
-					for rect in tetriminoes.keys():
-						if rect[1] < row_y:
-							rects.append((rect, tetriminoes[rect]))
-			
-					for rect in rects: 
-						tetriminoes.pop(rect[0])
-
-					for rect in rects:
-						tetriminoes[(rect[0][0], rect[0][1] + BLOCK_SIZE, rect[0][2], rect[0][3])] = rect[1]
+		if hit_bottom_or_top:
+			check_for_completed_rows_to_clear(tetriminoes)
 
 		#Update
 		#for tetrimino in tetriminoes:
