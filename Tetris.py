@@ -255,6 +255,8 @@ def check_for_completed_rows_to_clear(tetriminoes):
 	if len(rows_cleared) > 0:
 		move_down_rows(rows_cleared, tetriminoes)
 
+	return len(rows_cleared)
+
 def check_if_tetrimino_should_stop_moving(tetrimino, tetriminoes):
 	# check if tetrimino has hit bottom of grid area and needs to stop moving
 	for rect in tetrimino.rects:
@@ -274,6 +276,13 @@ def check_if_tetrimino_should_stop_moving(tetrimino, tetriminoes):
 			if m_rect_y == p_rect_y - BLOCK_SIZE and m_rect_x == p_rect_x:
 				return True
 
+# generator function to compute current level speeed
+def generate_level_speed():
+	speed = 200
+	while speed >= 100:
+		yield speed
+		speed -= 50
+
 def game_loop():
 	# dictionary containing mappings from rects to their colors. EX: {rect(...): colors.GREEN, ...}
 	tetriminoes = {}
@@ -285,9 +294,30 @@ def game_loop():
 	action_flag = 0
 	dt = 0
 	touch_timer = 0
-	rows_cleared = []
+	num_rows_cleared = 0
+	curr_level = 1
+	next_level = 1
+	level_speeds = generate_level_speed()
+	touch_time_limit = 4000
+
 
 	while running:
+		# increase speed when current level reaches the next level
+		if curr_level == next_level:
+			next_level += 1
+			touch_time_limit -= 1000
+
+			if touch_time_limit < 4000:
+				touch_time_limit = 4000
+
+			try: 
+				down_speed = next(level_speeds) 
+			except StopIteration:
+				down_speed = 100
+		
+		print(down_speed)
+		print(touch_time_limit)
+
 		if game_over:
 			game_over_text = FONT.render("Game Over", True, colors.WHITE, colors.BLACK)
 			game_over_rect = game_over_text.get_rect()
@@ -351,7 +381,7 @@ def game_loop():
 			movable_tetrimino.update()
 
 		# move movable tetrimino down by one step automatically every second (based on dt)
-		if dt >= 1000:
+		if dt >= down_speed:
 			drop_tetrimino(movable_tetrimino, tetriminoes, grid_area)
 			movable_tetrimino.update()
 			if check_for_collisions(movable_tetrimino, tetriminoes, grid_area) == True:
@@ -363,7 +393,7 @@ def game_loop():
 		hit_bottom_or_top = check_if_tetrimino_should_stop_moving(movable_tetrimino, tetriminoes)
 	
 		if hit_bottom_or_top:
-			if touch_timer >= 20000:
+			if touch_timer >= touch_time_limit:
 				# add current movable tetrimino block's rects to set of placed tetrimino rects 
 				for rect in movable_tetrimino.rects:
 					tetriminoes[rect] = movable_tetrimino.color
@@ -376,11 +406,11 @@ def game_loop():
 				touch_timer += dt
 
 		if hit_bottom_or_top:
-			check_for_completed_rows_to_clear(tetriminoes)
+			num_rows_cleared += check_for_completed_rows_to_clear(tetriminoes)
 
-		#Update
-		#for tetrimino in tetriminoes:
-			#tetrimino.update()
+		if num_rows_cleared >= 1:
+			curr_level += 1
+			num_rows_cleared = 0
 
 		#Draw/Render
 		game_display.fill(colors.BLACK)
