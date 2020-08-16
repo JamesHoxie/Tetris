@@ -4,26 +4,6 @@ import math
 from classes import Tetrimino as t
 from classes.resources import Palette as colors
 
-
-
-# TODO:
-
-# next tetris block indicator in corner
-# change rng on blocks to not make 2 of the same kind appear back to back
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 pygame.init()
 pygame.key.set_repeat(10, 100)
 
@@ -49,13 +29,6 @@ score = 0
 def draw_grid_area():
 	return pygame.draw.rect(game_display, colors.WHITE, (0, 0, GRID_RIGHT, DISPLAY_HEIGHT), GRID_THICKNESS)
 
-def draw_grid():
-	for x in range(BLOCK_SIZE, GRID_RIGHT, BLOCK_SIZE):
-		pygame.draw.line(game_display, colors.BLACK, (x, 0), (x, DISPLAY_HEIGHT), 1)
-
-	for y in range(BLOCK_SIZE, DISPLAY_HEIGHT, BLOCK_SIZE):
-		pygame.draw.line(game_display, colors.BLACK, (0, y), (GRID_RIGHT, y), 1)
-
 def display_score():
 	font_color = colors.WHITE
 	score_text = SCORE_FONT.render("Score: " + str(score), True, font_color, colors.BLACK)
@@ -79,6 +52,34 @@ def display_level():
 
 	game_display.blit(level_text, level_rect)
 	game_display.blit(level_num_text, level_num_rect)
+
+def display_next_tetrimino(tetrimino):
+	draw_x = int(DISPLAY_WIDTH/1.85)
+	draw_y = int(DISPLAY_HEIGHT/15)
+	len_x = BLOCK_SIZE*5
+	len_y = len_x
+
+	display_box = pygame.draw.rect(game_display, colors.WHITE, (draw_x, draw_y, len_x, len_y), GRID_THICKNESS)
+	tetrimino.x, tetrimino.y = display_box.center
+
+	# center tetrimino in display box
+	if tetrimino.shape == "O":
+		tetrimino.x -= BLOCK_SIZE
+		tetrimino.y -= BLOCK_SIZE
+
+	elif tetrimino.shape == "I":
+		tetrimino.x -= BLOCK_SIZE
+		tetrimino.y -= BLOCK_SIZE/2
+
+	else:
+		tetrimino.x -= BLOCK_SIZE/2
+		tetrimino.y -= BLOCK_SIZE
+	
+	tetrimino.update()
+
+	for rect in tetrimino.rects:
+		game_display.fill(tetrimino.color, rect)
+		pygame.draw.rect(game_display, colors.BLACK, rect, 1)
 
 def display_start_menu():
 	MENU_FONT = pygame.font.Font("freesansbold.ttf", 28)
@@ -184,11 +185,13 @@ def check_for_collisions(tetrimino, placed_rects, grid_area):
 def draw_tetriminoes(tetrimino, placed_rects):
 	for rect in tetrimino.rects:
 		game_display.fill(tetrimino.color, rect)
+		pygame.draw.rect(game_display, colors.BLACK, rect, 1)
 
 	for placed_tetrimino in placed_rects:
 		color = placed_rects[placed_tetrimino]
 		rect = placed_tetrimino
 		game_display.fill(color, rect)
+		pygame.draw.rect(game_display, colors.BLACK, rect, 1)
 
 # undo last action indicated by action flag()
 def undo_action(action_flag, tetrimino):
@@ -322,6 +325,16 @@ def generate_level_speed():
 		yield speed
 		speed -= 50
 
+# generate a new tetrimino, given one chance to reroll if same shape is generated as last 
+def generate_new_tetrimino(last_tetrimino_shape):
+	new_tetrimino = t.Tetrimino(GRID_RIGHT/2, BLOCK_SIZE)
+
+	# if got same shape as last time, generate another block to lower chances of repeats
+	if last_tetrimino_shape == new_tetrimino.shape:
+		new_tetrimino = t.Tetrimino(GRID_RIGHT/2, BLOCK_SIZE)
+
+	return new_tetrimino
+
 def game_loop():
 	global curr_level
 	# dictionary containing mappings from rects to their colors. EX: {rect(...): colors.GREEN, ...}
@@ -331,6 +344,7 @@ def game_loop():
 	running = True
 	game_over = False
 	movable_tetrimino = t.Tetrimino(GRID_RIGHT/2, BLOCK_SIZE)
+	next_tetrimino = generate_new_tetrimino(movable_tetrimino.shape)
 	action_flag = 0
 	dt = 0
 	touch_timer = 0
@@ -339,7 +353,6 @@ def game_loop():
 	level_speeds = generate_level_speed()
 	touch_time_limit = 16000
 	max_level = 15
-	last_tetrimino_shape = None
 
 
 	while running:
@@ -443,15 +456,11 @@ def game_loop():
 					# if rect did not exist in placed rects, then add rects to placed rects
 						placed_rects[rect] = movable_tetrimino.color
 
-				# create new tetris block to move
-				movable_tetrimino = t.Tetrimino(GRID_RIGHT/2, BLOCK_SIZE)
-
-				# if got same shape as last time, generate another block to lower chances of repeats
-				if last_tetrimino_shape == movable_tetrimino.shape:
-					print("works I guess")
-					movable_tetrimino = t.Tetrimino(GRID_RIGHT/2, BLOCK_SIZE)
-
-				last_tetrimino_shape = movable_tetrimino.shape
+				movable_tetrimino = next_tetrimino
+				movable_tetrimino.x = GRID_RIGHT/2
+				movable_tetrimino.y = BLOCK_SIZE
+				movable_tetrimino.update()
+				next_tetrimino = generate_new_tetrimino(movable_tetrimino.shape)
 				touch_timer = 0
 
 			else:
@@ -462,18 +471,18 @@ def game_loop():
 		else:
 			touch_timer = 0
 
-		if num_rows_cleared >= 1:
+		if num_rows_cleared >= 10:
 			curr_level += 1
 			if curr_level > max_level:
 				curr_level = max_level
-			num_rows_cleared = 0
+			num_rows_cleared = num_rows_cleared - 10
 
 		#Draw/Render
 		game_display.fill(colors.BLACK)
 		display_score()
 		display_level()
+		display_next_tetrimino(next_tetrimino)
 		draw_tetriminoes(movable_tetrimino, placed_rects)
-		draw_grid()
 		draw_grid_area()
 
 		pygame.display.update()

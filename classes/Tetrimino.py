@@ -97,7 +97,7 @@ class Tetrimino():
 							  (self.x, self.y-self.block_size, self.block_size, self.block_size)]
 		
 		elif self.shape == "J":
-			if self.rotation == 0:
+			if self.rotation == 90:
 				# block is   	* 
 				#             	*
 				#              **
@@ -106,7 +106,7 @@ class Tetrimino():
 							  (self.x, self.y+self.block_size, self.block_size, self.block_size),
 							  (self.x-self.block_size, self.y+self.block_size, self.block_size, self.block_size)]
 
-			elif self.rotation == 90:
+			elif self.rotation == 180:
 				# block is     *
 				#              ***
 				#             	 
@@ -115,7 +115,7 @@ class Tetrimino():
 							  (self.x+self.block_size, self.y, self.block_size, self.block_size),
 							  (self.x-self.block_size, self.y-self.block_size, self.block_size, self.block_size)]
 
-			elif self.rotation == 180:
+			elif self.rotation == 270:
 				# block is    	**
 				#            	*
 				#               *
@@ -124,7 +124,7 @@ class Tetrimino():
 							  (self.x+self.block_size, self.y-self.block_size, self.block_size, self.block_size),
 							  (self.x, self.y+self.block_size, self.block_size, self.block_size)]       
 			
-			else: # rotation is 270
+			else: # rotation is 0
 				# block is    	
 				#              *** 
 				#             	 *
@@ -134,7 +134,7 @@ class Tetrimino():
 							  (self.x+self.block_size, self.y+self.block_size, self.block_size, self.block_size)]
 		
 		elif self.shape == "L":
-			if self.rotation == 0:
+			if self.rotation == 270:
 				# block is   	* 
 				#             	*
 				#               **
@@ -143,7 +143,7 @@ class Tetrimino():
 							  (self.x, self.y+self.block_size, self.block_size, self.block_size),
 							  (self.x+self.block_size, self.y+self.block_size, self.block_size, self.block_size)]
 			
-			elif self.rotation == 90:
+			elif self.rotation == 0:
 				# block is     
 				#              ***
 				#              * 
@@ -152,7 +152,7 @@ class Tetrimino():
 							  (self.x-self.block_size, self.y, self.block_size, self.block_size),
 							  (self.x-self.block_size, self.y+self.block_size, self.block_size, self.block_size)]
 
-			elif self.rotation == 180:
+			elif self.rotation == 90:
 				# block is     **
 				#            	*
 				#               *
@@ -161,7 +161,7 @@ class Tetrimino():
 							  (self.x-self.block_size, self.y-self.block_size, self.block_size, self.block_size),
 							  (self.x, self.y-self.block_size, self.block_size, self.block_size)]            
 			
-			else: # rotation is 270
+			else: # rotation is 180
 				# block is    	 *
 				#              *** 
 				#             	 
