@@ -4,6 +4,26 @@ import math
 from classes import Tetrimino as t
 from classes.resources import Palette as colors
 
+
+
+# TODO:
+
+# next tetris block indicator in corner
+# change rng on blocks to not make 2 of the same kind appear back to back
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 pygame.init()
 pygame.key.set_repeat(10, 100)
 
@@ -297,8 +317,8 @@ def check_if_tetrimino_should_stop_moving(tetrimino, placed_rects):
 
 # generator function to compute current level speeed
 def generate_level_speed():
-	speed = 850
-	while speed >= 100:
+	speed = 800
+	while speed >= 50:
 		yield speed
 		speed -= 50
 
@@ -319,6 +339,7 @@ def game_loop():
 	level_speeds = generate_level_speed()
 	touch_time_limit = 16000
 	max_level = 15
+	last_tetrimino_shape = None
 
 
 	while running:
@@ -351,7 +372,7 @@ def game_loop():
 			try: 
 				down_speed = next(level_speeds) 
 			except StopIteration:
-				down_speed = 100
+				down_speed = 50
 						
 		#Process input (events)
 		for event in pygame.event.get():
@@ -424,6 +445,13 @@ def game_loop():
 
 				# create new tetris block to move
 				movable_tetrimino = t.Tetrimino(GRID_RIGHT/2, BLOCK_SIZE)
+
+				# if got same shape as last time, generate another block to lower chances of repeats
+				if last_tetrimino_shape == movable_tetrimino.shape:
+					print("works I guess")
+					movable_tetrimino = t.Tetrimino(GRID_RIGHT/2, BLOCK_SIZE)
+
+				last_tetrimino_shape = movable_tetrimino.shape
 				touch_timer = 0
 
 			else:
